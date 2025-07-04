@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+    .tag-badge {
+        display: inline-block;
+        margin-right: 0.25rem;
+        color: white;
+        padding: 0.25em 0.4em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    #notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+</style>
+{% endblock %}
+
+{% block title %}Article: {{ article.title }}{% endblock %}
+
+{% block content %}
+<!-- Notification container for AJAX operations -->
+<div id="notification-container"></div>
+<div class="container">
+    <h1>{{ article.title }}</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Article Details</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Source:</strong> <a href="{{ article.url }}" target="_blank">{{ article.url }}</a></p>
+                    <p><strong>Feed:</strong> {{ article.feed.name }}</p>
+                    <p><strong>Published:</strong> {{ article.published.strftime('%Y-%m-%d %H:%M') if article.published else 'Unknown' }}</p>
+                    <p><strong>Created:</strong> {{ article.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    
+                    <div class="mt-3">
+                        <p><strong>Tags:</strong></p>
+                        <div class="article-tags mb-2">
+                            {% for tag in article.tags %}
+                                <span class="tag-badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+                            {% else %}
+                                <em>No tags</em>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#tagModal">
+                            <i class="fas fa-tags"></i> Manage Tags
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Processing Status:</strong> 
+                        {% if article.processed %}
+                            <span class="badge badge-success">Processed</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </p>
+                    
+                    <p><strong>Filter Status:</strong>
+                        {% if article.processed and article.summary %}
+                            {% set summary_data = article.summary|from_json %}
+                            {% if summary_data.filtered_out %}
+                                <span class="badge badge-danger">Filtered by GPT-3.5</span>
+                            {% else %}
+                                <span class="badge badge-success">Kept & Processed by GPT-4</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-secondary">Not processed</span>
+                        {% endif %}
+                    </p>
+                    
+                    <p><strong>Sent to Joplin:</strong> 
+                        {% if article.sent_to_joplin %}
+                            <span class="badge badge-success">Yes</span>
+                            {% if article.joplin_id %}
+                                <small>(ID: {{ article.joplin_id }})</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-danger">No</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% if not article.processed %}
+                <div class="mt-3">
+                    <form action="{{ url_for('feeds.process_article_now', article_id=article.id) }}" method="post">
+                        <button type="submit" class="btn btn-primary">Process Now</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if summary_data %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2>AI Summary</h2>
+            </div>
+            <div class="card-body">
+                <div class="summary-content">
+                    <h3>Summary</h3>
+                    <p>{{ summary_data.get('summary', 'No summary available') }}</p>
+                    
+                    {% if summary_data.get('iocs') %}
+                        <h3>IOCs</h3>
+                        <ul>
+                            {% for ioc_type, ioc_values in summary_data.get('iocs', {}).items() %}
+                                {% if ioc_values %}
+                                    <li><strong>{{ ioc_type.upper() }}:</strong> {{ ', '.join(ioc_values) }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    
+                    {% if summary_data.get('ttp') %}
+                        <h3>TTPs</h3>
+                        <ul>
+                            {% for ttp in summary_data.get('ttp', []) %}
+                                <li>{{ ttp }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    
+                    {% if summary_data.get('threat_groups') %}
+                        <h3>Threat Groups</h3>
+                        <ul>
+                            {% for group in summary_data.get('threat_groups', []) %}
+                                <li>{{ group }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Article Content</h2>
+        </div>
+        <div class="card-body">
+            <div class="article-content">
+                {% if article.content %}
+                    <div class="markdown-content">
+                        {{ article.content|safe }}
+                    </div>
+                {% else %}
+                    <p>No content available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tag Management Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1" role="dialog" aria-labelledby="tagModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">Manage Tags</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="tagSelectionArea">
+                    <p>Loading tags...</p>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('tags.create_tag') }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-plus"></i> Create New Tag
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshTagsBtn">
+                        <i class="fas fa-sync"></i> Refresh Tags
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveTagsBtn">Save Tags</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        const tagSelectionArea = document.getElementById('tagSelectionArea');
+        const refreshTagsBtn = document.getElementById('refreshTagsBtn');
+        const saveTagsBtn = document.getElementById('saveTagsBtn');
+        const articleId = "{{ article.id }}";
+        let allTags = [];
+        let selectedTagIds = [];
+        
+        // Load tags when modal is opened
+        $('#tagModal').on('show.bs.modal', loadTags);
+        
+        function loadTags() {
+            // Get current article tags
+            selectedTagIds = [];
+            {% for tag in article.tags %}
+                selectedTagIds.push({{ tag.id }});
+            {% endfor %}
+            
+            // Fetch all available tags
+            fetch('/api/tags')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    allTags = data;
+                    renderTagCheckboxes();
+                })
+                .catch(function(error) {
+                    console.error('Error fetching tags:', error);
+                    tagSelectionArea.innerHTML = '<div class="alert alert-danger">Error loading tags</div>';
+                });
+        }
+        
+        function renderTagCheckboxes() {
+            let html = '<div class="tag-checkboxes">';
+            allTags.forEach(function(tag) {
+                const isChecked = selectedTagIds.includes(tag.id) ? 'checked' : '';
+                html += '<div class="custom-control custom-checkbox mb-2"><input type="checkbox" class="custom-control-input" id="tag-' + tag.id + '" value="' + tag.id + '" ' + isChecked + '><label class="custom-control-label" for="tag-' + tag.id + '"><span class="badge" style="background-color: ' + tag.color + ';">' + tag.name + '</span></label></div>';
+            });
+            html += '</div>';
+            tagSelectionArea.innerHTML = html;
+        }
+        
+        // Function to show notifications
+        function showNotification(message, type) {
+            const notificationContainer = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-' + type + ' alert-dismissible fade show';
+            notification.innerHTML = message + 
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                '<span aria-hidden="true">&times;</span></button>';
+            
+            notificationContainer.appendChild(notification);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                notification.classList.remove('show');
+                setTimeout(function() {
+                    notificationContainer.removeChild(notification);
+                }, 300); // Wait for fade out animation
+            }, 5000);
+        }
+        
+        // Refresh tags button
+        refreshTagsBtn.addEventListener('click', loadTags);
+        
+        // Save tags when save button is clicked
+        saveTagsBtn.addEventListener('click', function() {
+            const selectedTagIds = [];
+            document.querySelectorAll('#tagSelectionArea input[type="checkbox"]:checked').forEach(function(checkbox) {
+                selectedTagIds.push(checkbox.value);
+            });
+            
+            fetch('/api/articles/' + articleId + '/tags', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ tag_ids: selectedTagIds })
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.status === 'success') {
+                    // Show success notification instead of reloading immediately
+                    showNotification('Tags updated successfully!', 'success');
+                    // Reload after a short delay to show the notification
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('Error saving tags: ' + (data.error || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                showNotification('An error occurred while saving tags.', 'danger');
+            });
+        });
+        
+        // Function to load all tags
+        function loadTags() {
+            fetch('/api/tags')
+                .then(response => response.json())
+                .then(tags => {
+                    allTags = tags;
+                    renderTagCheckboxes();
+                })
+                .catch(error => {
+                    console.error('Error loading tags:', error);
+                    tagSelectionArea.innerHTML = '<div class="alert alert-danger">Error loading tags</div>';
+                });
+        }
+        
+        // Function to render tag checkboxes
+        function renderTagCheckboxes() {
+            if (allTags.length === 0) {
+                tagSelectionArea.innerHTML = '<div class="alert alert-info">No tags found. Create some tags first.</div>';
+                return;
+            }
+            
+            let html = '<div class="tag-checkboxes">';
+            allTags.forEach(tag => {
+                const isChecked = selectedTagIds.includes(tag.id) ? 'checked' : '';
+                html += '<div class="custom-control custom-checkbox mb-2"><input type="checkbox" class="custom-control-input" id="tag-' + tag.id + '" value="' + tag.id + '" ' + isChecked + '><label class="custom-control-label" for="tag-' + tag.id + '"><span class="badge" style="background-color: ' + tag.color + ';">' + tag.name + '</span></label></div>';
+            });
+            html += '</div>';
+            tagSelectionArea.innerHTML = html;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTI Monitor - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/normalize.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>CTI Monitor</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}" class="{% if request.path == url_for('main.index') %}active{% endif %}">Home</a></li>
+                    <li><a href="{{ url_for('feeds.feed_list') }}" class="{% if request.path == url_for('feeds.feed_list') %}active{% endif %}">Feeds</a></li>
+                    <li><a href="{{ url_for('feeds.article_list') }}" class="{% if request.path == url_for('feeds.article_list') %}active{% endif %}">Articles</a></li>
+                    <li><a href="{{ url_for('tags.tag_list') }}" class="{% if request.path == url_for('tags.tag_list') %}active{% endif %}">Tags</a></li>
+                    <li><a href="{{ url_for('main.settings_page') }}" class="{% if request.path == url_for('main.settings_page') %}active{% endif %}">Settings</a></li>
+                    <li><a href="{{ url_for('main.prompts_page') }}" class="{% if request.path == url_for('main.prompts_page') %}active{% endif %}">Prompts</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </main>
+        
+        <footer>
+            <p>&copy; {{ now.year }} CTI Monitor - Feeds to Joplin Integration</p>
+        </footer>
+    </div>
+    
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

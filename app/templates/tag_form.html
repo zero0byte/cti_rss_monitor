@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{% if tag %}Edit Tag{% else %}New Tag{% endif %}{% endblock %}
+
+{% block content %}
+<section class="tag-form-section">
+    <div class="card">
+        <div class="card-header">
+            <h2>{% if tag %}Edit Tag{% else %}New Tag{% endif %}</h2>
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="name">Tag Name</label>
+                    <input type="text" class="form-control" id="name" name="name" 
+                           value="{{ tag.name if tag else '' }}" required>
+                    <small class="form-text text-muted">Enter a unique name for this tag</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="color">Tag Color</label>
+                    <div class="input-group">
+                        <input type="color" class="form-control" id="color" name="color" 
+                               value="{{ tag.color if tag else '#6c757d' }}" style="max-width: 100px;">
+                        <div class="input-group-append">
+                            <span class="input-group-text" id="colorHex">{{ tag.color if tag else '#6c757d' }}</span>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">Choose a color for this tag</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Preview</label>
+                    <div>
+                        <span class="badge" id="tagPreview" 
+                              style="background-color: {{ tag.color if tag else '#6c757d' }}">
+                            {{ tag.name if tag else 'Tag Preview' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{{ url_for('tags.tag_list') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorInput = document.getElementById('color');
+        const colorHex = document.getElementById('colorHex');
+        const tagPreview = document.getElementById('tagPreview');
+        const nameInput = document.getElementById('name');
+        
+        // Update color hex display when color changes
+        colorInput.addEventListener('input', function() {
+            colorHex.textContent = this.value;
+            tagPreview.style.backgroundColor = this.value;
+        });
+        
+        // Update tag preview text when name changes
+        nameInput.addEventListener('input', function() {
+            tagPreview.textContent = this.value || 'Tag Preview';
+        });
+    });
+</script>
+{% endblock %}

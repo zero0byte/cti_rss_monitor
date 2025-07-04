@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Tags{% endblock %}
+
+{% block content %}
+<section class="tags-section">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Tags</h2>
+        <a href="{{ url_for('tags.create_tag') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Tag
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            {% if tags %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Color</th>
+                                <th>Articles</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tag in tags %}
+                                <tr>
+                                    <td>
+                                        <span class="badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="color-preview" style="background-color: {{ tag.color }}"></div>
+                                        {{ tag.color }}
+                                    </td>
+                                    <td>{{ tag.articles|length }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('tags.edit_tag', tag_id=tag.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmDelete('{{ tag.name }}', {{ tag.id }})">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">No tags found. Create your first tag!</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete tag "<span id="tagName"></span>"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST" action="">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .color-preview {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        margin-right: 10px;
+        vertical-align: middle;
+        border: 1px solid #ddd;
+    }
+</style>
+
+<script>
+    function confirmDelete(name, id) {
+        document.getElementById('tagName').textContent = name;
+        document.getElementById('deleteForm').action = "{{ url_for('tags.delete_tag', tag_id=0) }}".replace('0', id);
+        $('#deleteModal').modal('show');
+    }
+</script>
+{% endblock %}

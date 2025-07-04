@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Prompts{% endblock %}
+
+{% block content %}
+<section class="prompts">
+    <h2>OpenAI Prompts</h2>
+    <p>Customize the prompts used for filtering and parsing articles with OpenAI models.</p>
+    
+    <form method="POST" action="{{ url_for('main.prompts_page') }}">
+        <div class="form-group">
+            <h3>Filter Prompt (GPT-3.5)</h3>
+            <p class="help-text">This prompt is used with GPT-3.5 to initially filter articles.</p>
+            
+            <div class="input-group">
+                <label for="filter_model">Model</label>
+                <select id="filter_model" name="filter_model">
+                    <option value="gpt-3.5-turbo" {% if filter_prompt.model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo</option>
+                    <option value="gpt-3.5-turbo-16k" {% if filter_prompt.model == 'gpt-3.5-turbo-16k' %}selected{% endif %}>GPT-3.5 Turbo 16k</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="filter_prompt">Prompt Content</label>
+                <textarea id="filter_prompt" name="filter_prompt" rows="6" placeholder="Enter your filter prompt here...">{{ filter_prompt.content if filter_prompt else '' }}</textarea>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <h3>Parse Prompt (GPT-4)</h3>
+            <p class="help-text">This prompt is used with GPT-4 for detailed parsing of relevant articles.</p>
+            
+            <div class="input-group">
+                <label for="parse_model">Model</label>
+                <select id="parse_model" name="parse_model">
+                    <option value="gpt-4-turbo" {% if parse_prompt.model == 'gpt-4-turbo' %}selected{% endif %}>GPT-4 Turbo</option>
+                    <option value="gpt-4" {% if parse_prompt.model == 'gpt-4' %}selected{% endif %}>GPT-4</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="parse_prompt">Prompt Content</label>
+                <textarea id="parse_prompt" name="parse_prompt" rows="6" placeholder="Enter your parse prompt here...">{{ parse_prompt.content if parse_prompt else '' }}</textarea>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Prompts</button>
+            <button type="button" class="btn" onclick="resetToDefaults()">Reset to Defaults</button>
+        </div>
+    </form>
+    
+    <div class="prompt-tips">
+        <h3>Prompt Tips</h3>
+        <ul>
+            <li><strong>Be specific:</strong> Clearly define what information you want extracted from articles.</li>
+            <li><strong>Structure:</strong> Ask for structured output (like JSON) for consistent results.</li>
+            <li><strong>Context:</strong> The article content will be appended to your prompt automatically.</li>
+            <li><strong>Length:</strong> Keep prompts concise but comprehensive.</li>
+        </ul>
+    </div>
+</section>
+
+<script>
+function resetToDefaults() {
+    if (confirm('Are you sure you want to reset prompts to default values?')) {
+        document.getElementById('filter_prompt').value = "Summarise this article in 3 sentences. List IOCs (hashes, IPs, domains), TTPs (MITRE IDs), and threat groups if any. Return compact JSON.";
+        document.getElementById('filter_model').value = "gpt-3.5-turbo";
+        
+        document.getElementById('parse_prompt').value = "Summarise this article in 3 sentences. List IOCs (hashes, IPs, domains), TTPs (MITRE IDs), and threat groups if any. Return compact JSON.";
+        document.getElementById('parse_model').value = "gpt-4-turbo";
+    }
+}
+</script>
+{% endblock %}

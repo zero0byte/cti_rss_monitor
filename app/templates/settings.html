@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<section class="settings">
+    <h2>API Settings</h2>
+    <p>Configure your OpenAI API key and Joplin Webclipper settings.</p>
+    
+    <form method="POST" action="{{ url_for('main.settings_page') }}">
+        <div class="form-group">
+            <h3>OpenAI Configuration</h3>
+            <div class="input-group">
+                <label for="openai_api_key">OpenAI API Key</label>
+                <input type="password" id="openai_api_key" name="openai_api_key" value="{{ settings.openai_api_key if settings else '' }}" placeholder="sk-...">
+                <button type="button" class="toggle-password" onclick="togglePassword('openai_api_key')">Show</button>
+            </div>
+            <p class="help-text">Your OpenAI API key is required to use the GPT models for article processing.</p>
+        </div>
+        
+        <div class="form-group">
+            <h3>Processing Settings</h3>
+            <div class="input-group">
+                <label for="max_article_age">Maximum Article Age (days)</label>
+                <input type="number" id="max_article_age" name="max_article_age" value="{{ settings.max_article_age if settings else 0 }}" min="0" step="1">
+            </div>
+            <p class="help-text">Ignore articles older than this many days for processing. Set to 0 for no limit.</p>
+        </div>
+
+        <div class="form-group">
+            <h3>Joplin Webclipper Configuration</h3>
+            
+            <div class="input-group checkbox-group">
+                <label for="joplin_enabled">Enable Joplin Integration</label>
+                <input type="checkbox" id="joplin_enabled" name="joplin_enabled" {% if settings and settings.joplin_enabled %}checked{% endif %}>
+            </div>
+            <p class="help-text">Enable or disable sending processed articles to Joplin.</p>
+            
+            <div class="input-group">
+                <label for="joplin_api_url">Joplin API URL</label>
+                <input type="text" id="joplin_api_url" name="joplin_api_url" value="{{ settings.joplin_api_url if settings else 'http://localhost:41184/notes' }}" placeholder="http://localhost:41184/notes">
+            </div>
+            <p class="help-text">The URL of your Joplin Webclipper API. Default is http://localhost:41184/notes</p>
+            
+            <div class="input-group">
+                <label for="joplin_token">Joplin API Token</label>
+                <input type="password" id="joplin_token" name="joplin_token" value="{{ settings.joplin_token if settings else '' }}" placeholder="Your Joplin API token">
+                <button type="button" class="toggle-password" onclick="togglePassword('joplin_token')">Show</button>
+            </div>
+            <p class="help-text">Your Joplin API token can be found in Joplin's Web Clipper settings.</p>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+            <button type="button" class="btn" onclick="testConnection()">Test Connection</button>
+        </div>
+    </form>
+    
+    <div id="connection-status" class="connection-status" style="display: none;">
+        <h3>Connection Test Results</h3>
+        <div id="openai-test-result" class="test-result"></div>
+        <div id="joplin-test-result" class="test-result"></div>
+    </div>
+</section>
+
+<script>
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.textContent = 'Hide';
+    } else {
+        input.type = 'password';
+        button.textContent = 'Show';
+    }
+}
+
+function testConnection() {
+    const connectionStatus = document.getElementById('connection-status');
+    const openaiResult = document.getElementById('openai-test-result');
+    const joplinResult = document.getElementById('joplin-test-result');
+    
+    connectionStatus.style.display = 'block';
+    
+    // Test OpenAI connection
+    openaiResult.innerHTML = '<span class="testing">Testing OpenAI connection...</span>';
+    fetch('/usage')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'error') {
+                openaiResult.innerHTML = '<span class="error">❌ OpenAI: ' + data.message + '</span>';
+            } else {
+                openaiResult.innerHTML = '<span class="success">✅ OpenAI: Connection successful</span>';
+            }
+        })
+        .catch(error => {
+            openaiResult.innerHTML = '<span class="error">❌ OpenAI: Connection failed</span>';
+        });
+    
+    // We don't have a direct endpoint to test Joplin
+    // This is a placeholder that would need to be implemented
+    joplinResult.innerHTML = '<span class="warning">⚠️ Joplin: Cannot test connection directly</span>';
+}
+</script>
+{% endblock %}

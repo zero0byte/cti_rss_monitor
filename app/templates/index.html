@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Welcome to CTI Monitor</h2>
+    <p>This application integrates Feeds and Articles with Joplin to monitor and parse articles using OpenAI.</p>
+    
+    <div class="card-container">
+        <div class="card">
+            <h3>RSS Feeds</h3>
+            <p>Manage your RSS feeds for monitoring.</p>
+            <a href="{{ url_for('feeds.feed_list') }}" class="btn">Manage Feeds</a>
+        </div>
+        
+        <div class="card">
+            <h3>Articles</h3>
+            <p>View and process monitored articles.</p>
+            <a href="{{ url_for('feeds.article_list') }}" class="btn">View Articles</a>
+        </div>
+        
+        <div class="card">
+            <h3>Settings</h3>
+            <p>Configure your OpenAI API key and Joplin Webclipper settings.</p>
+            <a href="{{ url_for('main.settings_page') }}" class="btn">Configure Settings</a>
+        </div>
+        
+        <div class="card">
+            <h3>Prompts</h3>
+            <p>Customize the OpenAI prompts used for filtering and parsing articles.</p>
+            <a href="{{ url_for('main.prompts_page') }}" class="btn">Manage Prompts</a>
+        </div>
+    </div>
+    
+    <div class="info-panel">
+        <h3>How It Works</h3>
+        <ol>
+            <li>The application monitors RSS feeds at regular intervals</li>
+            <li>New articles are stored in the database for processing</li>
+            <li>GPT-3.5 is used to filter articles for relevance</li>
+            <li>If relevant, GPT-4 is used to parse the content in detail</li>
+            <li>Results are sent to Joplin via the Webclipper API</li>
+        </ol>
+    </div>
+    
+    <div class="api-status">
+        <h3>API Status</h3>
+        <div id="status-container">
+            <div class="status-item">
+                <span class="status-label">OpenAI API:</span>
+                <span id="openai-status" class="status-indicator">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Joplin API:</span>
+                <span id="joplin-status" class="status-indicator">Checking...</span>
+            </div>
+        </div>
+        <button id="check-status" class="btn">Check Status</button>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkStatusBtn = document.getElementById('check-status');
+    const openaiStatus = document.getElementById('openai-status');
+    const joplinStatus = document.getElementById('joplin-status');
+    
+    checkStatusBtn.addEventListener('click', function() {
+        // Check OpenAI API status
+        openaiStatus.textContent = 'Checking...';
+        openaiStatus.className = 'status-indicator';
+        
+        fetch('/usage')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    openaiStatus.textContent = 'Not Configured';
+                    openaiStatus.className = 'status-indicator error';
+                } else {
+                    openaiStatus.textContent = 'Connected';
+                    openaiStatus.className = 'status-indicator success';
+                }
+            })
+            .catch(error => {
+                openaiStatus.textContent = 'Error';
+                openaiStatus.className = 'status-indicator error';
+            });
+        
+        // We don't have a direct endpoint to check Joplin status
+        // This is a placeholder that would need to be implemented
+        joplinStatus.textContent = 'Configuration Required';
+        joplinStatus.className = 'status-indicator warning';
+    });
+});
+</script>
+{% endblock %}
