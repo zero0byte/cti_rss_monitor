@@ -2,6 +2,9 @@
 
 ![joplin](https://github.com/user-attachments/assets/53261e39-d80f-46f9-9b21-ad9ad4baa306)
 
+![article_example](https://github.com/user-attachments/assets/0059b0d4-f705-4208-bf10-794d4a46aa10)
+
+
 This application monitors RSS feeds, processes articles using OpenAI's GPT models, and sends the results to Joplin. It provides a modern Flask UI for configuring API keys, managing feeds, customising prompts, and processing content.
 
 ## Features
