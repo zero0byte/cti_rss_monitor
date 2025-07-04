@@ -1,5 +1,7 @@
 # CTI Monitor - RSS to Joplin Integration
 
+![joplin](https://github.com/user-attachments/assets/53261e39-d80f-46f9-9b21-ad9ad4baa306)
+
 This application monitors RSS feeds, processes articles using OpenAI's GPT models, and sends the results to Joplin. It provides a modern Flask UI for configuring API keys, managing feeds, customising prompts, and processing content.
 
 ## Features
@@ -24,6 +26,7 @@ This application monitors RSS feeds, processes articles using OpenAI's GPT model
 3. Configure your environment:
    - OpenAI API Key
    - Joplin Webclipper API URL and token
+4. Make sure you top up your OpenAI credit balance AND set a sensible spending limit
 
 ## Running the Application
 
@@ -37,13 +40,19 @@ This will start the CTI Monitor application with UI (accessible at http://localh
 
 1. **Configure Settings**: Visit the Settings page to set up your OpenAI API key and Joplin Webclipper details
    - Set the maximum article age (in days) to automatically skip processing older articles (0 = no limit)
+
+![settings](https://github.com/user-attachments/assets/7cadf150-267a-4afc-a3ee-78fdd759f605)
+
 2. **Add RSS Feeds**: Add and manage RSS feeds on the Feeds page
+![feeds_view](https://github.com/user-attachments/assets/ab4e9cc1-f1c5-45cb-88c5-bfc02f33ce1b)
 3. **Customise Prompts**: Modify the prompts used for filtering and parsing on the Prompts page
    - **IMPORTANT**: When customising the parse prompt (GPT-4), always preserve the JSON structure `{"summary": "...", "threat_groups": [...], "ttp": [...], "tags": [...]}` or the system may fail to parse the response correctly
 4. **Manage Tags**: Create and edit tags with custom names and colours for article categorisation
+![tags](https://github.com/user-attachments/assets/525fe996-4f18-4423-a7db-e57a8716fe62)
 5. **Monitor Articles**: View and manually process articles on the Articles page
    - Filter articles by feed, processing status, date range, and tags
    - Assign tags to articles for better organisation
+![processed_article](https://github.com/user-attachments/assets/f0c8ab34-0075-4015-85a2-bae01b76326e)
 6. **Running the Scheduler**: Use the dedicated script to run the background scheduler
    ```bash
    python run_scheduler.py
