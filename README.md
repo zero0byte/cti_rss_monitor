@@ -4,6 +4,7 @@
 
 ![article_example](https://github.com/user-attachments/assets/0059b0d4-f705-4208-bf10-794d4a46aa10)
 
+## All articles are the property of the original owners or publishers. This application only presents parsed output and no ownership of content, source or other data fed to the application is implied or stated.
 
 This application monitors RSS feeds, processes articles using OpenAI's GPT models, and sends the results to Joplin. It provides a modern Flask UI for configuring API keys, managing feeds, customising prompts, and processing content.
 
